@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_purchase_order_form_inherit_approval" model="ir.ui.view">
+        <field name="name">purchase.order.form.approval.inherit</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//header//button[@name='button_confirm']" position="replace"/>
+
+            <!-- Approval Fields Group -->
+            <xpath expr="//sheet" position="inside">
+                <group name="approval_group" string="Approval">
+                    <field name="approved_ops_id" readonly="1"/>
+                    <field name="approval_date_ops" readonly="1"/>
+                    <field name="approved_finance_id" readonly="1"/>
+                    <field name="approval_date_finance" readonly="1"/>
+                </group>
+            </xpath>
+
+            <!-- Approval Buttons in Header -->
+            <xpath expr="//header" position="inside">
+
+                <!-- Level 0: Submit -->
+                <button name="action_submit_for_approval"
+                        type="object"
+                        string="Submit for Approval"
+                        class="oe_highlight"
+                        invisible="state != 'draft'"/>
+
+                <!-- Level 1: Procurement Manager -->
+                <button name="action_approve_ops"
+                        type="object"
+                        string="Approve (Procurement Manager)"
+                        class="oe_highlight"
+                        invisible="state != 'submitted'"
+                        groups="purchase_sequential_approval.group_ops_manager"/>
+
+                <!-- Level 2: Finance Manager -->
+                <button name="action_approve_finance"
+                        type="object"
+                        string="Approve (Finance Manager)"
+                        class="oe_highlight"
+                        invisible="state != 'ops_approved'"
+                        groups="purchase_sequential_approval.group_finance_manager"/>
+
+                <!-- Reject (visible in any pending approval state) -->
+                <button name="action_reject"
+                        type="object"
+                        string="Reject"
+                        invisible="state in ['draft', 'finance_approved', 'purchase', 'done', 'cancel']"
+                        groups="purchase_sequential_approval.group_ops_manager,purchase_sequential_approval.group_finance_manager"/>
+
+                <!-- Level 3: Confirm Order (Purchase Manager only, after finance approval) -->
+                <button name="button_confirm"
+                        type="object"
+                        string="Confirm Order"
+                        class="oe_highlight"
+                        invisible="state != 'finance_approved'"
+                        groups="purchase.group_purchase_manager"/>
+
+            </xpath>
+
+            <!-- Statusbar -->
+            <xpath expr="//field[@name='state']" position="attributes">
+                <attribute name="statusbar_visible">
+                    draft,submitted,ops_approved,finance_approved,purchase,done
+                </attribute>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>
