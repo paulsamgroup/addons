@@ -11,8 +11,8 @@
 #                                                                             #
 ###############################################################################
 {
-    'name': 'Purchase Payment Statusi',
-    'version': '18.0.1.0.0',
+    'name': 'Purchase Payment Statusa',
+    'version': '18.0.1.0.1',
     'author': 'Aboutknowledge (Hong Kong) Limited',
     'company': 'Aboutknowledge (Hong Kong) Limited',
     'maintainer': 'Aboutknowledge (Hong Kong) Limited',
