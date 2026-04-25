@@ -14,8 +14,10 @@ class PurchaseOrder(models.Model):
     abk_payment_status = fields.Selection(
         [
             ('not_paid', 'Not Paid'),
-            ('partial_paid', 'Partial Paid'),
-            ('fully_paid', 'Fully Paid'),
+            ('in_payment', 'In Payment'),
+            ('partial', 'Partially Paid'),
+            ('paid', 'Paid'),
+            ('reversed', 'Reversed'),
             ('nothing', 'Bill Not Created')
         ],
         string="Payment Status",
@@ -23,30 +25,34 @@ class PurchaseOrder(models.Model):
         copy=False,
         store=True,
         readonly=True,
-        default="not_paid"
+        default="nothing"
     )
 
-    @api.depends('invoice_ids.payment_state', 'invoice_ids.amount_residual')
+    @api.depends('invoice_ids', 'invoice_ids.state', 'invoice_ids.move_type', 'invoice_ids.payment_state')
     def _compute_payment_status(self):
         """
-        Compute the payment status based on related invoices' payment states.
+        Mirror the vendor bill payment_state on the PO. If no bill exists,
+        show Bill Not Created.
         """
         for rec in self:
-            if rec.invoice_ids:
-                full_paid = 0
-                partial_paid = 0
-                no_paid = 0
-                for lines in rec.invoice_ids:
-                    if lines.amount_residual == 0.0:
-                        full_paid += 1
-                    elif lines.amount_residual < lines.amount_total and lines.amount_residual > 0:
-                        partial_paid += 1
-                    else:
-                        no_paid += 1
-                if full_paid > 0 and partial_paid == 0 and no_paid == 0:
-                    rec.abk_payment_status = 'fully_paid'
-                elif full_paid > 0 or (full_paid == 0 and partial_paid > 0):
-                    rec.abk_payment_status = 'partial_paid'
+            bills = rec.invoice_ids.filtered(
+                lambda inv: inv.move_type == 'in_invoice' and inv.state != 'cancel'
+            )
+            if bills:
+                payment_states = bills.mapped('payment_state')
+                if 'in_payment' in payment_states:
+                    rec.abk_payment_status = 'in_payment'
+                elif 'partial' in payment_states:
+                    rec.abk_payment_status = 'partial'
+                elif all(state == 'paid' for state in payment_states):
+                    rec.abk_payment_status = 'paid'
+                elif all(state == 'reversed' for state in payment_states):
+                    rec.abk_payment_status = 'reversed'
+                elif 'not_paid' in payment_states and any(
+                    state in ('paid', 'in_payment', 'partial', 'reversed')
+                    for state in payment_states
+                ):
+                    rec.abk_payment_status = 'partial'
                 else:
                     rec.abk_payment_status = 'not_paid'
             else:

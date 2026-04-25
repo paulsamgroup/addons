@@ -30,9 +30,10 @@
                     <field name="abk_amount_paid" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                     <field name="abk_payment_status" widget="badge" optional="show"
                            decoration-danger="abk_payment_status == 'not_paid'"
-                           decoration-success="abk_payment_status == 'fully_paid'"
+                           decoration-success="abk_payment_status == 'paid'"
                            decoration-info="abk_payment_status == 'nothing'"
-                           decoration-warning="abk_payment_status == 'partial_paid'"/>
+                           decoration-warning="abk_payment_status in ('partial', 'in_payment')"
+                           decoration-muted="abk_payment_status == 'reversed'"/>
                 </xpath>
             </field>
         </record>
@@ -45,9 +46,10 @@
                     <field name="abk_amount_paid" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                     <field name="abk_payment_status" widget="badge" optional="show"
                            decoration-danger="abk_payment_status == 'not_paid'"
-                           decoration-success="abk_payment_status == 'fully_paid'"
+                           decoration-success="abk_payment_status == 'paid'"
                            decoration-info="abk_payment_status == 'nothing'"
-                           decoration-warning="abk_payment_status == 'partial_paid'"/>
+                           decoration-warning="abk_payment_status in ('partial', 'in_payment')"
+                           decoration-muted="abk_payment_status == 'reversed'"/>
                 </xpath>
             </field>
         </record>
