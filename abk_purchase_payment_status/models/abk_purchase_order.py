@@ -52,22 +52,7 @@ class PurchaseOrder(models.Model):
             else:
                 rec.abk_payment_status = 'nothing'
 
-    abk_po_bill_status = fields.Selection(
-        [
-            # Bill payment states (when bills exist)
-            ('not_paid', 'Not Paid'),
-            ('in_payment', 'In Payment'),
-            ('paid', 'Paid'),
-            ('partial', 'Partially Paid'),
-            ('reversed', 'Reversed'),
-            # PO states (when no bill created)
-            ('draft', 'RFQ'),
-            ('sent', 'RFQ Sent'),
-            ('to approve', 'To Approve'),
-            ('purchase', 'Purchase Order'),
-            ('done', 'Locked'),
-            ('cancel', 'Cancelled'),
-        ],
+    abk_po_bill_status = fields.Char(
         string="Status",
         compute="_compute_abk_po_bill_status",
         store=True,
