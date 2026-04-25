@@ -52,6 +52,51 @@ class PurchaseOrder(models.Model):
             else:
                 rec.abk_payment_status = 'nothing'
 
+    abk_po_bill_status = fields.Selection(
+        [
+            # Bill payment states (when bills exist)
+            ('not_paid', 'Not Paid'),
+            ('in_payment', 'In Payment'),
+            ('paid', 'Paid'),
+            ('partial', 'Partially Paid'),
+            ('reversed', 'Reversed'),
+            # PO states (when no bill created)
+            ('draft', 'RFQ'),
+            ('sent', 'RFQ Sent'),
+            ('to approve', 'To Approve'),
+            ('purchase', 'Purchase Order'),
+            ('done', 'Locked'),
+            ('cancel', 'Cancelled'),
+        ],
+        string="Status",
+        compute="_compute_abk_po_bill_status",
+        store=True,
+        readonly=True,
+    )
+
+    @api.depends('state', 'invoice_ids', 'invoice_ids.state', 'invoice_ids.payment_state', 'invoice_ids.move_type')
+    def _compute_abk_po_bill_status(self):
+        """
+        Show the bill's payment_state when posted vendor bills exist,
+        otherwise fall back to the PO's own state.
+        """
+        for rec in self:
+            posted_bills = rec.invoice_ids.filtered(
+                lambda inv: inv.state == 'posted' and inv.move_type == 'in_invoice'
+            )
+            if posted_bills:
+                payment_states = posted_bills.mapped('payment_state')
+                if 'in_payment' in payment_states:
+                    rec.abk_po_bill_status = 'in_payment'
+                elif all(s in ('paid', 'reversed') for s in payment_states):
+                    rec.abk_po_bill_status = 'paid'
+                elif 'partial' in payment_states:
+                    rec.abk_po_bill_status = 'partial'
+                else:
+                    rec.abk_po_bill_status = 'not_paid'
+            else:
+                rec.abk_po_bill_status = rec.state
+
     abk_amount_paid = fields.Float(
         compute='_compute_abk_amount_paid',
         string="Amount Paid",

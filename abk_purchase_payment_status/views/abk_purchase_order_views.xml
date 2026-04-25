@@ -18,7 +18,15 @@
             <field name="model">purchase.order</field>
             <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='state']" position="after">
+                <xpath expr="//field[@name='state']" position="replace">
+                    <field name="state" column_invisible="True"/>
+                    <field name="abk_po_bill_status" string="Status" optional="show" widget="badge"
+                           decoration-success="abk_po_bill_status in ('purchase', 'done', 'paid', 'in_payment')"
+                           decoration-warning="abk_po_bill_status in ('to approve', 'partial', 'not_paid')"
+                           decoration-info="abk_po_bill_status in ('draft', 'sent')"
+                           decoration-muted="abk_po_bill_status in ('cancel', 'reversed')"/>
+                </xpath>
+                <xpath expr="//field[@name='invoice_status']" position="after">
                     <field name="abk_amount_paid" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                     <field name="abk_payment_status" widget="badge" optional="show"
                            decoration-danger="abk_payment_status == 'not_paid'"
