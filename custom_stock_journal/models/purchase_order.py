@@ -11,12 +11,8 @@ class PurchaseOrder(models.Model):
                 lambda line: not line.display_type and not line.is_downpayment and not line.analytic_distribution
             )
             if missing_lines:
-                line_names = ', '.join(
-                    missing_lines.mapped(lambda line: line.product_id.display_name or line.name or str(line.sequence))
-                )
                 raise ValidationError(_(
-                    'Please fill Analytic Distribution on all purchase order lines before continuing. Missing lines: %s',
-                    line_names,
+                    'Please fill in the Analytic Distribution for all order lines before confirming.'
                 ))
 
     def button_confirm(self):
