@@ -14,8 +14,10 @@ class PurchaseOrder(models.Model):
     abk_payment_status = fields.Selection(
         [
             ('not_paid', 'Not Paid'),
-            ('partial_paid', 'Partial Paid'),
-            ('fully_paid', 'Fully Paid'),
+            ('in_payment', 'In Payment'),
+            ('partial', 'Partially Paid'),
+            ('paid', 'Paid'),
+            ('reversed', 'Reversed'),
             ('nothing', 'Bill Not Created')
         ],
         string="Payment Status",
@@ -23,58 +25,56 @@ class PurchaseOrder(models.Model):
         copy=False,
         store=True,
         readonly=True,
-        default="not_paid"
+        default="nothing"
     )
 
-    @api.depends('invoice_ids.payment_state', 'invoice_ids.amount_residual')
+    @api.depends(
+        'order_line.invoice_lines.move_id.state',
+        'order_line.invoice_lines.move_id.move_type',
+        'order_line.invoice_lines.move_id.payment_state',
+    )
     def _compute_payment_status(self):
         """
-        Compute the payment status based on related invoices' payment states.
+        Mirror the vendor bill payment_state directly on the PO.
+        Only posted (confirmed) vendor bills count. Falls back to
+        'Bill Not Created' when no posted bill exists.
         """
         for rec in self:
-            if rec.invoice_ids:
-                full_paid = 0
-                partial_paid = 0
-                no_paid = 0
-                for lines in rec.invoice_ids:
-                    if lines.amount_residual == 0.0:
-                        full_paid += 1
-                    elif lines.amount_residual < lines.amount_total and lines.amount_residual > 0:
-                        partial_paid += 1
-                    else:
-                        no_paid += 1
-                if full_paid > 0 and partial_paid == 0 and no_paid == 0:
-                    rec.abk_payment_status = 'fully_paid'
-                elif full_paid > 0 or (full_paid == 0 and partial_paid > 0):
-                    rec.abk_payment_status = 'partial_paid'
+            bills = rec.invoice_ids.filtered(
+                lambda inv: inv.move_type == 'in_invoice' and inv.state == 'posted'
+            )
+            if bills:
+                payment_states = bills.mapped('payment_state')
+                if 'in_payment' in payment_states:
+                    rec.abk_payment_status = 'in_payment'
+                elif 'partial' in payment_states:
+                    rec.abk_payment_status = 'partial'
+                elif any(s in ('paid', 'reversed') for s in payment_states) and \
+                        'not_paid' in payment_states:
+                    # mixed: some paid, some not
+                    rec.abk_payment_status = 'partial'
+                elif all(s == 'paid' for s in payment_states):
+                    rec.abk_payment_status = 'paid'
+                elif all(s == 'reversed' for s in payment_states):
+                    rec.abk_payment_status = 'reversed'
                 else:
                     rec.abk_payment_status = 'not_paid'
             else:
                 rec.abk_payment_status = 'nothing'
 
-    abk_po_bill_status = fields.Selection(
-        [
-            # Bill payment states (when bills exist)
-            ('not_paid', 'Not Paid'),
-            ('in_payment', 'In Payment'),
-            ('paid', 'Paid'),
-            ('partial', 'Partially Paid'),
-            ('reversed', 'Reversed'),
-            # PO states (when no bill created)
-            ('draft', 'RFQ'),
-            ('sent', 'RFQ Sent'),
-            ('to approve', 'To Approve'),
-            ('purchase', 'Purchase Order'),
-            ('done', 'Locked'),
-            ('cancel', 'Cancelled'),
-        ],
+    abk_po_bill_status = fields.Char(
         string="Status",
         compute="_compute_abk_po_bill_status",
         store=True,
         readonly=True,
     )
 
-    @api.depends('state', 'invoice_ids', 'invoice_ids.state', 'invoice_ids.payment_state', 'invoice_ids.move_type')
+    @api.depends(
+        'state',
+        'order_line.invoice_lines.move_id.state',
+        'order_line.invoice_lines.move_id.move_type',
+        'order_line.invoice_lines.move_id.payment_state',
+    )
     def _compute_abk_po_bill_status(self):
         """
         Show the bill's payment_state when posted vendor bills exist,
