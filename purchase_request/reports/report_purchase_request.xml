@@ -54,66 +54,79 @@
                         <t t-if="o.line_ids">
                             <h3>Products</h3>
                             <table class="table table-condensed">
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            <strong>Description</strong>
-                                        </th>
-                                        <th groups="analytic.group_analytic_accounting">
-                                            <strong>Analytic Distribution</strong>
-                                        </th>
-                                        <th class="text-right">
-                                            <strong>Qty</strong>
-                                        </th>
-                                        <th class="text-center" groups="uom.group_uom">
-                                            <strong>Product UoM</strong>
-                                        </th>
-                                        <th>
-                                            <strong>Estimated Cost</strong>
-                                        </th>
-                                        <th class="text-right">
-                                            <strong>Requested Date</strong>
-                                        </th>
-                                        <th>
-                                            <strong>Specifications</strong>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="o.line_ids" t-as="line_id">
-                                        <td>
-                                            <span t-field="line_id.name" />
-                                        </td>
-                                        <td groups="analytic.group_analytic_accounting">
-                                            <span
-                                                t-field="line_id.analytic_distribution"
-                                            />
-                                        </td>
-                                        <td class="text-right">
-                                            <span t-field="line_id.product_qty" />
-                                        </td>
-                                        <t>
-                                            <td
-                                                class="text-center"
-                                                groups="uom.group_uom"
-                                            >
-                                                <span
-                                                    t-field="line_id.product_uom_id.category_id.name"
-                                                />
-                                            </td>
-                                        </t>
-                                        <td>
-                                            <span t-field="line_id.estimated_cost" />
-                                        </td>
-                                        <td class="text-right">
-                                            <span t-field="line_id.date_required" />
-                                        </td>
-                                        <td>
-                                            <span t-field="line_id.specifications" />
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <strong>Description</strong>
+                                    </th>
+                                    <th groups="analytic.group_analytic_accounting">
+                                        <strong>Analytic Distribution</strong>
+                                    </th>
+                                    <th class="text-right">
+                                        <strong>Qty</strong>
+                                    </th>
+                                    <th class="text-center" groups="uom.group_uom">
+                                        <strong>Product UoM</strong>
+                                    </th>
+                                    <th class="text-right">
+                                        <strong>Estimated Cost</strong>
+                                    </th>
+                                    <th class="text-right">
+                                        <strong>Requested Date</strong>
+                                    </th>
+                                    <th>
+                                        <strong>Specifications</strong>
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="line_id">
+                                    <td>
+                                        <span t-field="line_id.name"/>
+                                    </td>
+
+                                    <td groups="analytic.group_analytic_accounting">
+                                        <span t-field="line_id.analytic_distribution"/>
+                                    </td>
+
+                                    <td class="text-right">
+                                        <span t-field="line_id.product_qty"/>
+                                    </td>
+
+                                    <td class="text-center" groups="uom.group_uom">
+                                        <span t-field="line_id.product_uom_id.category_id.name"/>
+                                    </td>
+
+                                    <td class="text-right">
+                                        <span t-field="line_id.estimated_cost"/>
+                                    </td>
+
+                                    <td class="text-right">
+                                        <span t-field="line_id.date_required"/>
+                                    </td>
+
+                                    <td>
+                                        <span t-field="line_id.specifications"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4"></td>
+                                    <td class="text-right">
+                                        <strong>Total Estimated Amount:</strong>
+                                    </td>
+                                    <td colspan="2" class="text-right">
+                                        <strong>
+                                            <span t-esc="sum(line.product_qty * line.estimated_cost for line in o.line_ids)"
+                                                t-options='{"widget": "monetary", "display_currency": o.company_id.currency_id}'/>
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
                         </t>
                         <div id="oe_structure_report_request_2" class="oe_structure" />
                     </div>
