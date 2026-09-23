@@ -1,0 +1,14 @@
+<odoo>
+
+    <record id="purchase_order_form_inherit_analytic_required" model="ir.ui.view">
+        <field name="name">purchase.order.form.analytic.required</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']//field[@name='analytic_distribution']" position="attributes">
+                <attribute name="required">not display_type and not is_downpayment</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
